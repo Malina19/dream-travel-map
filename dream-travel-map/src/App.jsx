@@ -14,6 +14,10 @@ function App() {
 	const [newCountry, setNewCountry] = useState('')
 	const [error, setError] = useState('')
 	const [searchQuery, setSearchQuery] = useState('')
+	const [isDarkMode, setIsDarkMode] = useState(() => {
+		const saved = localStorage.getItem('darkMode')
+		return saved === 'true'
+	})
 
 	// 🆕 NOWY: Stan dla wishlist
 	const [wishlist, setWishlist] = useState(() => {
@@ -37,11 +41,29 @@ function App() {
 		localStorage.setItem('wishlist', JSON.stringify(wishlist))
 	}, [wishlist])
 
+	// 🆕 NOWY: Zapisz tryb ciemny do localStorage
+
+	useEffect(() => {
+		localStorage.setItem('darkMode', isDarkMode.toString())
+	}, [isDarkMode])
+
+	useEffect(() => {
+		if (isDarkMode) {
+			document.documentElement.classList.add('dark')
+		} else {
+			document.documentElement.classList.remove('dark')
+		}
+	}, [isDarkMode])
+
 	// 🆕 NOWE: Obliczanie statystyk
 	const totalCountries = 195 // Liczba krajów na świecie
 	const visitedCount = visitedCountries.length
 	const worldPercentage = ((visitedCount / totalCountries) * 100).toFixed(1)
 	const continentsVisited = getUniqueContinents(visitedCountries).length
+
+	const toggleDarkMode = () => {
+		setIsDarkMode(!isDarkMode)
+	}
 
 	const handleAddCountry = (countryFromMap = null) => {
 		// Jeśli kraj pochodzi z mapy - użyj go, jeśli nie - weź z inputa
@@ -148,9 +170,21 @@ function App() {
 	)
 
 	return (
-		<div className='flex h-screen bg-gray-50'>
+		<div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
 			{/* PANEL BOCZNY */}
-			<div className='w-100 bg-white shadow-xl p-6 overflow-y-auto'>
+			<div className={`w-96 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow-xl p-6 overflow-y-auto`}>
+				<div className='mb-6'>
+					<button
+						onClick={toggleDarkMode}
+						className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all font-semibold ${
+							isDarkMode
+								? 'bg-yellow-500 hover:bg-yellow-600 text-gray-900'
+								: 'bg-gray-800 hover:bg-gray-900 text-white'
+						}`}>
+						<span className='text-2xl'>{isDarkMode ? '☀️' : '🌙'}</span>
+						<span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+					</button>
+				</div>
 				<div className='mb-6'>
 					<h1 className='text-3xl font-bold text-blue-600'>Dream Travel Map</h1>
 					<p className='text-gray-500 text-sm mt-2'>Track your adventures</p>
@@ -377,9 +411,12 @@ function App() {
 			</div>
 
 			{/* OBSZAR MAPY */}
-			<div className='flex-1 relative bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden'>
+			<div
+				className={`flex-1 relative overflow-hidden ${
+					isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-cyan-50'
+				}`}>
 				{/* 🆕 NOWA: Interaktywna mapa */}
-				<WorldMap visitedCountries={visitedCountries} onCountryClick={handleAddCountry} />
+				<WorldMap visitedCountries={visitedCountries} onCountryClick={handleAddCountry} isDarkMode={isDarkMode} />
 
 				{/* 🆕 NOWY: Tooltip z instrukcją (narożnik) */}
 				<div className='absolute top-6 right-6 bg-white rounded-xl shadow-lg p-4 max-w-xs'>

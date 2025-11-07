@@ -3,7 +3,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 
 const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-function WorldMap({ visitedCountries, onCountryClick }) {
+function WorldMap({ visitedCountries, onCountryClick, isDarkMode }) {
 	const [tooltip, setTooltip] = useState({ visible: false, name: '', x: 0, y: 0 })
 	const [zoom, setZoom] = useState(1)
 	const [center, setCenter] = useState([0, 20])
@@ -56,7 +56,9 @@ function WorldMap({ visitedCountries, onCountryClick }) {
 
 	return (
 		<div
-			className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 p-8 relative'
+			className={`w-full h-full flex items-center justify-center ${
+				isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-cyan-50'
+			} p-8 relative`}
 			onMouseMove={handleMouseMove}>
 			<div className='w-full max-w-6xl relative'>
 				<ComposableMap
