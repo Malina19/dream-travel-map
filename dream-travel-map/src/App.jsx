@@ -6,9 +6,17 @@ function App() {
 	const [visitedCountries, setVisitedCountries] = useState(() => {
 		const saved = localStorage.getItem('visitedCountries')
 		if (saved) {
-			return JSON.parse(saved)
+			const parsed = JSON.parse(saved)
+
+			if (parsed.length > 0 && typeof parsed[0] === 'string') {
+				return parsed.map(countryName => ({
+					name: countryName,
+					cities: [],
+				}))
+			}
+			return parsed
 		}
-		return ['Poland', 'Spain', 'Italy']
+		return []
 	})
 
 	const [newCountry, setNewCountry] = useState('')
@@ -30,6 +38,9 @@ function App() {
 
 	// 🆕 NOWY: Stan dla nowego kraju na wishlist
 	const [newWishlistCountry, setNewWishlistCountry] = useState('')
+	const [addingCityTo, setAddingCityTo] = useState(null)
+	const [newCityName, setNewCityName] = useState('')
+	const [newCityDate, setNewCityDate] = useState('')
 
 	// Zapisz visited countries do localStorage
 	useEffect(() => {
@@ -59,7 +70,7 @@ function App() {
 	const totalCountries = 195 // Liczba krajów na świecie
 	const visitedCount = visitedCountries.length
 	const worldPercentage = ((visitedCount / totalCountries) * 100).toFixed(1)
-	const continentsVisited = getUniqueContinents(visitedCountries).length
+	const continentsVisited = getUniqueContinents(visitedCountries.map(c => c.name)).length
 
 	const toggleDarkMode = () => {
 		setIsDarkMode(!isDarkMode)
@@ -91,7 +102,9 @@ function App() {
 		}
 
 		// Walidacja 2: Duplikat
-		const isDuplicate = visitedCountries.some(country => country.toLowerCase() === formattedCountryName.toLowerCase())
+		const isDuplicate = visitedCountries.some(
+			country => country.name.toLowerCase() === formattedCountryName.toLowerCase()
+		)
 
 		if (isDuplicate) {
 			if (!countryFromMap) {
@@ -101,7 +114,7 @@ function App() {
 		}
 
 		// ✅ Wszystko OK - dodaj kraj
-		setVisitedCountries([...visitedCountries, formattedCountryName])
+		setVisitedCountries([...visitedCountries, { name: formattedCountryName, cities: [] }])
 
 		// Wyczyść input tylko gdy dodajemy z formularza
 		if (!countryFromMap) {
@@ -114,7 +127,7 @@ function App() {
 	}
 
 	const handleRemoveCountry = countryToRemove => {
-		setVisitedCountries(visitedCountries.filter(country => country !== countryToRemove))
+		setVisitedCountries(visitedCountries.filter(country => country.name !== countryToRemove))
 	}
 
 	// 🆕 NOWA FUNKCJA: Dodawanie do wishlist
@@ -131,7 +144,9 @@ function App() {
 
 		// Sprawdź czy już nie jest na wishlist lub visited
 		const isOnWishlist = wishlist.some(country => country.toLowerCase() === formattedCountryName.toLowerCase())
-		const isVisited = visitedCountries.some(country => country.toLowerCase() === formattedCountryName.toLowerCase())
+		const isVisited = visitedCountries.some(
+			country => country.name.toLowerCase() === formattedCountryName.toLowerCase()
+		)
 
 		if (!isOnWishlist && !isVisited) {
 			setWishlist([...wishlist, formattedCountryName])
@@ -143,6 +158,52 @@ function App() {
 	// 🆕 NOWA FUNKCJA: Usuwanie z wishlist
 	const handleRemoveFromWishlist = countryToRemove => {
 		setWishlist(wishlist.filter(country => country !== countryToRemove))
+	}
+
+	// Funckja do dodawania miasta do kraju/////
+
+	const handleAddCity = countryName => {
+		const cityName = newCityName.trim()
+		const visitDate = newCityDate
+
+		if (cityName === '' || visitDate === '') {
+			return
+		}
+
+		const updatedCountries = visitedCountries.map(country => {
+			if (country.name === countryName) {
+				const cityExists = country.cities.some(city => city.name.toLowerCase() === cityName.toLowerCase())
+
+				if (cityExists) {
+					return country
+				}
+
+				return {
+					...country,
+					cities: [...country.cities, { name: cityName, visitDate }],
+				}
+			}
+			return country
+		})
+
+		setVisitedCountries(updatedCountries)
+		setNewCityName('')
+		setNewCityDate('')
+		setAddingCityTo(null)
+	}
+
+	// Usuwanie miasta z kraju///
+	const handleRemoveCity = (countryName, cityName) => {
+		const updatedCountries = visitedCountries.map(country => {
+			if (countryName === countryName) {
+				return {
+					...country,
+					cities: country.cities.filter(city => city.name !== cityName),
+				}
+			}
+			return country
+		})
+		setVisitedCountries(updatedCountries)
 	}
 
 	const handleKeyPress = e => {
@@ -166,7 +227,7 @@ function App() {
 	}
 
 	const filteredCountries = visitedCountries.filter(country =>
-		country.toLowerCase().includes(searchQuery.toLowerCase())
+		country.name.toLowerCase().includes(searchQuery.toLowerCase())
 	)
 
 	return (
@@ -328,32 +389,118 @@ function App() {
 						<div className='space-y-2'>
 							{filteredCountries.map(country => (
 								<div
-									key={country}
-									className='bg-white border border-gray-200 rounded-lg p-3 hover:border-cyan-400 transition-all flex items-center justify-between group'>
-									<span className='text-gray-700 font-medium'>
-										{searchQuery ? (
-											<>
-												{country.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, index) =>
-													part.toLowerCase() === searchQuery.toLowerCase() ? (
-														<span key={index} className='bg-yellow-200'>
-															{part}
-														</span>
-													) : (
-														<span key={index}>{part}</span>
-													)
+									key={country.name}
+									className={`border rounded-lg p-3 transition-all ${
+										isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+									}`}>
+									{/* Nagłówek kraju + przycisk usuń */}
+									<div className='flex items-center justify-between mb-2'>
+										<div className='flex items-center gap-2'>
+											<span className='text-lg font-semibold'>
+												{searchQuery ? (
+													<>
+														{country.name.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, index) =>
+															part.toLowerCase() === searchQuery.toLowerCase() ? (
+																<span key={index} className='bg-yellow-200'>
+																	{part}
+																</span>
+															) : (
+																<span key={index}>{part}</span>
+															)
+														)}
+													</>
+												) : (
+													country.name
 												)}
-											</>
-										) : (
-											country
-										)}
-									</span>
+											</span>
 
-									<button
-										onClick={() => handleRemoveCountry(country)}
-										className='text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100'
-										title='Remove country'>
-										❌
-									</button>
+											{/* Licznik miast */}
+											{country.cities.length > 0 && (
+												<span className='text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full'>
+													{country.cities.length} {country.cities.length === 1 ? 'city' : 'cities'}
+												</span>
+											)}
+										</div>
+
+										<button
+											onClick={() => handleRemoveCountry(country.name)}
+											className={`transition-colors ${
+												isDarkMode ? 'text-gray-400 hover:text-red-400' : 'text-gray-400 hover:text-red-500'
+											}`}
+											title='Remove country'>
+											❌
+										</button>
+									</div>
+
+									{/* Lista miast */}
+									{country.cities.length > 0 && (
+										<div className='mb-2 space-y-1'>
+											{country.cities.map(city => (
+												<div
+													key={city.name}
+													className={`flex items-center justify-between text-sm py-1 px-2 rounded group/city ${
+														isDarkMode ? 'bg-gray-600' : 'bg-gray-50'
+													}`}>
+													<div className='flex items-center gap-2'>
+														<span className='text-xs'>📍</span>
+														<span>{city.name}</span>
+														<span className='text-xs text-gray-500'>
+															({new Date(city.visitDate).toLocaleDateString('en-GB')})
+														</span>
+													</div>
+													<button
+														onClick={() => handleRemoveCity(country.name, city.name)}
+														className='text-xs text-gray-400 hover:text-red-500 opacity-0 group-hover/city:opacity-100 transition-opacity'
+														title='Remove city'>
+														✕
+													</button>
+												</div>
+											))}
+										</div>
+									)}
+
+									{/* Przycisk Add City */}
+									{addingCityTo === country.name ? (
+										// Formularz dodawania miasta
+										<div className={`p-3 rounded-lg space-y-2 ${isDarkMode ? 'bg-gray-600' : 'bg-blue-50'}`}>
+											<input
+												type='text'
+												value={newCityName}
+												onChange={e => setNewCityName(e.target.value)}
+												placeholder='City name (e.g. Paris)'
+												className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400'
+											/>
+											<input
+												type='date'
+												value={newCityDate}
+												onChange={e => setNewCityDate(e.target.value)}
+												className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400'
+											/>
+											<div className='flex gap-2'>
+												<button
+													onClick={() => handleAddCity(country.name)}
+													className='flex-1 bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors'>
+													✓ Add City
+												</button>
+												<button
+													onClick={() => {
+														setAddingCityTo(null)
+														setNewCityName('')
+														setNewCityDate('')
+													}}
+													className='px-4 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-semibold py-2 rounded-lg transition-colors'>
+													Cancel
+												</button>
+											</div>
+										</div>
+									) : (
+										// Przycisk do otwarcia formularza
+										<button
+											onClick={() => setAddingCityTo(country.name)}
+											className='w-full text-xs text-cyan-600 hover:text-cyan-700 font-semibold py-2 border border-dashed border-cyan-300 hover:border-cyan-400 rounded-lg transition-colors'>
+											+ Add City to {country.name}
+										</button>
+									)}
 								</div>
 							))}
 						</div>
@@ -416,7 +563,11 @@ function App() {
 					isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-cyan-50'
 				}`}>
 				{/* 🆕 NOWA: Interaktywna mapa */}
-				<WorldMap visitedCountries={visitedCountries} onCountryClick={handleAddCountry} isDarkMode={isDarkMode} />
+				<WorldMap
+					visitedCountries={visitedCountries.map(c => c.name)}
+					onCountryClick={handleAddCountry}
+					isDarkMode={isDarkMode}
+				/>
 
 				{/* 🆕 NOWY: Tooltip z instrukcją (narożnik) */}
 				<div className='absolute top-6 right-6 bg-white rounded-xl shadow-lg p-4 max-w-xs'>
