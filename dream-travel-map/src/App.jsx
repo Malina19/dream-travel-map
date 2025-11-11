@@ -41,6 +41,13 @@ function App() {
 	const [addingCityTo, setAddingCityTo] = useState(null)
 	const [newCityName, setNewCityName] = useState('')
 	const [newCityDate, setNewCityDate] = useState('')
+	const [expandedCountries, setExpandedCountries] = useState(() => {
+		const initial = {}
+		visitedCountries.forEach(country => {
+			initial[country.name] = true
+		})
+		return initial
+	})
 
 	// Zapisz visited countries do localStorage
 	useEffect(() => {
@@ -71,6 +78,9 @@ function App() {
 	const visitedCount = visitedCountries.length
 	const worldPercentage = ((visitedCount / totalCountries) * 100).toFixed(1)
 	const continentsVisited = getUniqueContinents(visitedCountries.map(c => c.name)).length
+	const totalCities = visitedCountries.reduce((sum, country) => {
+		return sum + country.cities.length
+	}, 0)
 
 	const toggleDarkMode = () => {
 		setIsDarkMode(!isDarkMode)
@@ -185,11 +195,12 @@ function App() {
 			}
 			return country
 		})
-
-		setVisitedCountries(updatedCountries)
-		setNewCityName('')
-		setNewCityDate('')
-		setAddingCityTo(null)
+		setTimeout(() => {
+			setVisitedCountries(updatedCountries)
+			setNewCityName('')
+			setNewCityDate('')
+			setAddingCityTo(null)
+		}, 150)
 	}
 
 	// Usuwanie miasta z kraju///
@@ -204,6 +215,14 @@ function App() {
 			return country
 		})
 		setVisitedCountries(updatedCountries)
+	}
+
+	// Funkcja rozwijania/zwijania miast///
+	const toggleCountryExpanded = countryName => {
+		setExpandedCountries(prev => ({
+			...prev,
+			[countryName]: !prev[countryName],
+		}))
 	}
 
 	const handleKeyPress = e => {
@@ -271,6 +290,16 @@ function App() {
 						</div>
 						<div className='text-3xl font-bold mb-1'>{continentsVisited}</div>
 						<div className='text-xs opacity-75'>out of 7</div>
+					</div>
+
+					{/* 🆕 NOWA Karta: Total Cities */}
+					<div className='bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl p-4 text-white'>
+						<div className='flex items-center justify-between mb-2'>
+							<div className='text-xs font-medium opacity-90'>Cities Visited</div>
+							<div className='text-2xl'>🏙️</div>
+						</div>
+						<div className='text-3xl font-bold mb-1'>{totalCities}</div>
+						<div className='text-xs opacity-75'>across {visitedCount} countries</div>
 					</div>
 
 					{/* 🆕 NOWA Karta 3: Wishlist */}
@@ -396,6 +425,15 @@ function App() {
 									{/* Nagłówek kraju + przycisk usuń */}
 									<div className='flex items-center justify-between mb-2'>
 										<div className='flex items-center gap-2'>
+											{/* Przycisk rozwijania (tylko jeśli są miasta) */}
+											{country.cities.length > 0 && (
+												<button
+													onClick={() => toggleCountryExpanded(country.name)}
+													className='text-gray-500 hover:text-gray-700 transition-colors'>
+													{expandedCountries[country.name] ? '🔽' : '▶️'}
+												</button>
+											)}
+
 											<span className='text-lg font-semibold'>
 												{searchQuery ? (
 													<>
@@ -433,29 +471,31 @@ function App() {
 									</div>
 
 									{/* Lista miast */}
-									{country.cities.length > 0 && (
+									{country.cities.length > 0 && expandedCountries[country.name] && (
 										<div className='mb-2 space-y-1'>
-											{country.cities.map(city => (
-												<div
-													key={city.name}
-													className={`flex items-center justify-between text-sm py-1 px-2 rounded group/city ${
-														isDarkMode ? 'bg-gray-600' : 'bg-gray-50'
-													}`}>
-													<div className='flex items-center gap-2'>
-														<span className='text-xs'>📍</span>
-														<span>{city.name}</span>
-														<span className='text-xs text-gray-500'>
-															({new Date(city.visitDate).toLocaleDateString('en-GB')})
-														</span>
+											{country.cities
+												.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate))
+												.map(city => (
+													<div
+														key={city.name}
+														className={`flex items-center justify-between text-sm py-1 px-2 rounded group/city ${
+															isDarkMode ? 'bg-gray-600' : 'bg-gray-50'
+														}`}>
+														<div className='flex items-center gap-2'>
+															<span className='text-xs'>📍</span>
+															<span>{city.name}</span>
+															<span className='text-xs text-gray-500'>
+																({new Date(city.visitDate).toLocaleDateString('en-GB')})
+															</span>
+														</div>
+														<button
+															onClick={() => handleRemoveCity(country.name, city.name)}
+															className='text-xs text-gray-400 hover:text-red-500 opacity-0 group-hover/city:opacity-100 transition-opacity'
+															title='Remove city'>
+															✕
+														</button>
 													</div>
-													<button
-														onClick={() => handleRemoveCity(country.name, city.name)}
-														className='text-xs text-gray-400 hover:text-red-500 opacity-0 group-hover/city:opacity-100 transition-opacity'
-														title='Remove city'>
-														✕
-													</button>
-												</div>
-											))}
+												))}
 										</div>
 									)}
 
@@ -467,19 +507,32 @@ function App() {
 												type='text'
 												value={newCityName}
 												onChange={e => setNewCityName(e.target.value)}
+												onKeyPress={e => {
+													if (e.key === 'Enter' && newCityName && newCityDate) {
+														handleAddCity(addingCityTo)
+													}
+												}}
 												placeholder='City name (e.g. Paris)'
+												autoFocus
 												className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400'
 											/>
 											<input
 												type='date'
 												value={newCityDate}
 												onChange={e => setNewCityDate(e.target.value)}
+												max={new Date().toISOString().split('T')[0]}
+												title='When did you visit this city?'
 												className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400'
 											/>
 											<div className='flex gap-2'>
 												<button
-													onClick={() => handleAddCity(country.name)}
-													className='flex-1 bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors'>
+													onClick={() => handleAddCity(addingCityTo)}
+													disabled={!newCityName || !newCityDate}
+													className={`flex-1 text-white text-sm font-semibold py-2 rounded-lg transition-colors ${
+														!newCityName || !newCityDate
+															? 'bg-gray-400 cursor-not-allowed'
+															: 'bg-cyan-500 hover:bg-cyan-600'
+													}`}>
 													✓ Add City
 												</button>
 												<button
@@ -590,7 +643,7 @@ function App() {
 				{/* Statystyki w narożniku */}
 				<div className='absolute bottom-6 right-6 bg-white rounded-xl shadow-lg p-4'>
 					<h3 className='font-bold text-gray-800 mb-3 text-sm'>📊 Quick Stats</h3>
-					<div className='grid grid-cols-2 gap-3 text-xs'>
+					<div className='grid grid-cols-3 gap-3 text-xs'>
 						<div className='bg-cyan-50 rounded-lg p-2 text-center'>
 							<div className='text-cyan-600 font-bold text-lg'>{visitedCount}</div>
 							<div className='text-gray-600'>Countries</div>
@@ -606,6 +659,10 @@ function App() {
 						<div className='bg-green-50 rounded-lg p-2 text-center'>
 							<div className='text-green-600 font-bold text-lg'>{worldPercentage}%</div>
 							<div className='text-gray-600'>World</div>
+						</div>
+						<div className='bg-purple-50 rounded-lg p-2 text-center'>
+							<div className='text-purple-600 font-bold text-lg'>{totalCities}</div>
+							<div className='text-gray-600'>Cities</div>
 						</div>
 					</div>
 				</div>
