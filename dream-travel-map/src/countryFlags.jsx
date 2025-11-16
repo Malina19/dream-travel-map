@@ -1,0 +1,177 @@
+import * as flags from 'country-flag-icons/react/3x2';
+
+// Mapping nazw krajów na kody ISO (2-literowe)
+const countryToISO = {
+  // Europa
+  'Poland': 'PL',
+  'Germany': 'DE',
+  'France': 'FR',
+  'Spain': 'ES',
+  'Italy': 'IT',
+  'United Kingdom': 'GB',
+  'Portugal': 'PT',
+  'Netherlands': 'NL',
+  'Belgium': 'BE',
+  'Switzerland': 'CH',
+  'Austria': 'AT',
+  'Czech Republic': 'CZ',
+  'Slovakia': 'SK',
+  'Hungary': 'HU',
+  'Romania': 'RO',
+  'Bulgaria': 'BG',
+  'Greece': 'GR',
+  'Croatia': 'HR',
+  'Slovenia': 'SI',
+  'Serbia': 'RS',
+  'Bosnia and Herzegovina': 'BA',
+  'Montenegro': 'ME',
+  'Albania': 'AL',
+  'North Macedonia': 'MK',
+  'Turkey': 'TR',
+  'Norway': 'NO',
+  'Sweden': 'SE',
+  'Finland': 'FI',
+  'Denmark': 'DK',
+  'Iceland': 'IS',
+  'Ireland': 'IE',
+  'Estonia': 'EE',
+  'Latvia': 'LV',
+  'Lithuania': 'LT',
+  'Ukraine': 'UA',
+  'Belarus': 'BY',
+  'Moldova': 'MD',
+  'Russia': 'RU',
+  'Luxembourg': 'LU',
+  'Malta': 'MT',
+  'Cyprus': 'CY',
+  'Monaco': 'MC',
+  'Liechtenstein': 'LI',
+  'San Marino': 'SM',
+  'Vatican City': 'VA',
+  'Andorra': 'AD',
+  
+  // Azja
+  'China': 'CN',
+  'Japan': 'JP',
+  'South Korea': 'KR',
+  'India': 'IN',
+  'Thailand': 'TH',
+  'Vietnam': 'VN',
+  'Singapore': 'SG',
+  'Malaysia': 'MY',
+  'Indonesia': 'ID',
+  'Philippines': 'PH',
+  'Cambodia': 'KH',
+  'Laos': 'LA',
+  'Myanmar': 'MM',
+  'Bangladesh': 'BD',
+  'Pakistan': 'PK',
+  'Sri Lanka': 'LK',
+  'Nepal': 'NP',
+  'Bhutan': 'BT',
+  'Mongolia': 'MN',
+  'Kazakhstan': 'KZ',
+  'Uzbekistan': 'UZ',
+  'Turkmenistan': 'TM',
+  'Kyrgyzstan': 'KG',
+  'Tajikistan': 'TJ',
+  'Afghanistan': 'AF',
+  'Israel': 'IL',
+  'United Arab Emirates': 'AE',
+  'Saudi Arabia': 'SA',
+  'Qatar': 'QA',
+  'Kuwait': 'KW',
+  'Bahrain': 'BH',
+  'Oman': 'OM',
+  'Yemen': 'YE',
+  'Jordan': 'JO',
+  'Lebanon': 'LB',
+  'Syria': 'SY',
+  'Iraq': 'IQ',
+  'Iran': 'IR',
+  'Armenia': 'AM',
+  'Azerbaijan': 'AZ',
+  'Georgia': 'GE',
+  
+  // Ameryka Północna
+  'United States': 'US',
+  'Canada': 'CA',
+  'Mexico': 'MX',
+  'Cuba': 'CU',
+  'Jamaica': 'JM',
+  'Haiti': 'HT',
+  'Dominican Republic': 'DO',
+  'Puerto Rico': 'PR',
+  'Costa Rica': 'CR',
+  'Panama': 'PA',
+  'Guatemala': 'GT',
+  'Belize': 'BZ',
+  'Honduras': 'HN',
+  'El Salvador': 'SV',
+  'Nicaragua': 'NI',
+  
+  // Ameryka Południowa
+  'Brazil': 'BR',
+  'Argentina': 'AR',
+  'Chile': 'CL',
+  'Peru': 'PE',
+  'Colombia': 'CO',
+  'Venezuela': 'VE',
+  'Ecuador': 'EC',
+  'Bolivia': 'BO',
+  'Paraguay': 'PY',
+  'Uruguay': 'UY',
+  'Guyana': 'GY',
+  'Suriname': 'SR',
+  
+  // Afryka
+  'Egypt': 'EG',
+  'Morocco': 'MA',
+  'South Africa': 'ZA',
+  'Kenya': 'KE',
+  'Ethiopia': 'ET',
+  'Nigeria': 'NG',
+  'Ghana': 'GH',
+  'Tanzania': 'TZ',
+  'Uganda': 'UG',
+  'Rwanda': 'RW',
+  'Senegal': 'SN',
+  'Tunisia': 'TN',
+  'Algeria': 'DZ',
+  'Libya': 'LY',
+  'Sudan': 'SD',
+  'Zimbabwe': 'ZW',
+  'Botswana': 'BW',
+  'Namibia': 'NA',
+  'Mozambique': 'MZ',
+  'Madagascar': 'MG',
+  'Mauritius': 'MU',
+  'Seychelles': 'SC',
+  
+  // Oceania
+  'Australia': 'AU',
+  'New Zealand': 'NZ',
+  'Fiji': 'FJ',
+  'Papua New Guinea': 'PG',
+  'Samoa': 'WS',
+  'Tonga': 'TO',
+  'Vanuatu': 'VU',
+};
+
+// Funkcja zwracająca komponent React z flagą SVG
+export const getCountryFlag = (countryName) => {
+  const isoCode = countryToISO[countryName];
+  
+  if (!isoCode) {
+    return null; // Brak flagi
+  }
+  
+  const FlagComponent = flags[isoCode];
+  
+  if (!FlagComponent) {
+    return null;
+  }
+  
+  // Zwracamy komponent React z flagą
+  return <FlagComponent className="inline-block" style={{ width: '1.5em', height: '1.5em' }} />;
+};

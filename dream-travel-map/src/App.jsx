@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getUniqueContinents, isValidCountry } from './countryData'
 import WorldMap from './WorldMap'
+import { getCountryFlag } from './countryFlags.jsx'
 
 function App() {
 	const [visitedCountries, setVisitedCountries] = useState(() => {
@@ -434,22 +435,28 @@ function App() {
 												</button>
 											)}
 
-											<span className='text-lg font-semibold'>
-												{searchQuery ? (
-													<>
-														{country.name.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, index) =>
-															part.toLowerCase() === searchQuery.toLowerCase() ? (
-																<span key={index} className='bg-yellow-200'>
-																	{part}
-																</span>
-															) : (
-																<span key={index}>{part}</span>
-															)
-														)}
-													</>
-												) : (
-													country.name
-												)}
+											<span className='text-lg font-semibold flex items-center gap-2'>
+												{/* Flaga */}
+												{getCountryFlag(country.name)}
+
+												{/* Nazwa kraju z highlightem */}
+												<span>
+													{searchQuery ? (
+														<>
+															{country.name.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, index) =>
+																part.toLowerCase() === searchQuery.toLowerCase() ? (
+																	<span key={index} className='bg-yellow-200'>
+																		{part}
+																	</span>
+																) : (
+																	<span key={index}>{part}</span>
+																)
+															)}
+														</>
+													) : (
+														country.name
+													)}
+												</span>
 											</span>
 
 											{/* Licznik miast */}
