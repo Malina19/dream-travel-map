@@ -83,6 +83,61 @@ function App() {
 		return sum + country.cities.length
 	}, 0)
 
+	// 🆕 NOWA STATYSTYKA 1: Most Visited Continent
+	const getMostVisitedContinent = () => {
+		if (visitedCountries.length === 0) return 'None yet'
+
+		const continentCounts = {}
+
+		visitedCountries.forEach(country => {
+			const continents = getUniqueContinents([country.name])
+			continents.forEach(continent => {
+				continentCounts[continent] = (continentCounts[continent] || 0) + 1
+			})
+		})
+
+		const sortedContinents = Object.entries(continentCounts).sort((a, b) => b[1] - a[1])
+
+		if (sortedContinents.length === 0) return 'None yet'
+
+		const [continent, count] = sortedContinents[0]
+		return { name: continent, count }
+	}
+
+	const mostVisitedContinent = getMostVisitedContinent()
+
+	// 🆕 NOWA STATYSTYKA 2: Countries Visited This Year
+	const getCountriesThisYear = () => {
+		const currentYear = new Date().getFullYear()
+
+		const countriesThisYear = visitedCountries.filter(country => {
+			return country.cities.some(city => {
+				const visitYear = new Date(city.visitDate).getFullYear()
+				return visitYear === currentYear
+			})
+		})
+
+		return countriesThisYear.length
+	}
+
+	const countriesThisYear = getCountriesThisYear()
+
+	// 🆕 NOWA STATYSTYKA 3: Most Explored Country
+	const getMostExploredCountry = () => {
+		if (visitedCountries.length === 0) return null
+
+		const sorted = [...visitedCountries].sort((a, b) => b.cities.length - a.cities.length)
+
+		if (sorted[0].cities.length === 0) return null
+
+		return {
+			name: sorted[0].name,
+			cityCount: sorted[0].cities.length,
+		}
+	}
+
+	const mostExploredCountry = getMostExploredCountry()
+
 	const toggleDarkMode = () => {
 		setIsDarkMode(!isDarkMode)
 	}
@@ -327,6 +382,99 @@ function App() {
 					</div>
 					<div className='mt-2 text-xs text-gray-500 text-center'>
 						{visitedCount} / {totalCountries} countries
+					</div>
+				</div>
+
+				{/* 🆕 NOWA SEKCJA: Travel Insights */}
+				<div className='mb-6'>
+					<h3 className={`text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+						✨ Travel Insights
+					</h3>
+					<div className='space-y-2'>
+						{/* Insight 1: Most Visited Continent */}
+						<div
+							className={`p-3 rounded-lg border ${
+								isDarkMode
+									? 'bg-gray-700 border-gray-600'
+									: 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+							}`}>
+							<div className='flex items-center justify-between'>
+								<div className='flex items-center gap-2'>
+									<span className='text-lg'>🌍</span>
+									<div>
+										<div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+											Favorite Continent
+										</div>
+										<div className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+											{mostVisitedContinent.name || 'None yet'}
+										</div>
+									</div>
+								</div>
+								{mostVisitedContinent.count && (
+									<div className='text-right'>
+										<div className='text-xl font-bold text-blue-600'>{mostVisitedContinent.count}</div>
+										<div className='text-xs text-gray-500'>
+											{mostVisitedContinent.count === 1 ? 'country' : 'countries'}
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Insight 2: Countries This Year */}
+						<div
+							className={`p-3 rounded-lg border ${
+								isDarkMode
+									? 'bg-gray-700 border-gray-600'
+									: 'bg-gradient-to-r from-green-50 to-teal-50 border-green-200'
+							}`}>
+							<div className='flex items-center justify-between'>
+								<div className='flex items-center gap-2'>
+									<span className='text-lg'>📅</span>
+									<div>
+										<div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+											New in {new Date().getFullYear()}
+										</div>
+										<div className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+											{countriesThisYear === 0
+												? 'Start traveling!'
+												: `${countriesThisYear} ${countriesThisYear === 1 ? 'country' : 'countries'}`}
+										</div>
+									</div>
+								</div>
+								{countriesThisYear > 0 && <div className='text-2xl font-bold text-green-600'>{countriesThisYear}</div>}
+							</div>
+						</div>
+
+						{/* Insight 3: Most Explored Country */}
+						{mostExploredCountry && (
+							<div
+								className={`p-3 rounded-lg border ${
+									isDarkMode
+										? 'bg-gray-700 border-gray-600'
+										: 'bg-gradient-to-r from-orange-50 to-pink-50 border-orange-200'
+								}`}>
+								<div className='flex items-center justify-between'>
+									<div className='flex items-center gap-2'>
+										<span className='text-lg'>🏆</span>
+										<div>
+											<div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Most Explored</div>
+											<div
+												className={`font-bold flex items-center gap-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+												{getCountryFlag(mostExploredCountry.name)}
+												<span>{mostExploredCountry.name}</span>
+											</div>
+										</div>
+									</div>
+									<div className='text-right'>
+										<div className='text-xl font-bold text-orange-600'>{mostExploredCountry.cityCount}</div>
+										<div className='text-xs text-gray-500'>
+											{mostExploredCountry.cityCount === 1 ? 'city' : 'cities'}
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -648,9 +796,11 @@ function App() {
 				</div>
 
 				{/* Statystyki w narożniku */}
-				<div className='absolute bottom-6 right-6 bg-white rounded-xl shadow-lg p-4'>
+				<div className='absolute bottom-6 right-6 bg-white rounded-xl shadow-lg p-4 max-w-sm'>
 					<h3 className='font-bold text-gray-800 mb-3 text-sm'>📊 Quick Stats</h3>
-					<div className='grid grid-cols-3 gap-3 text-xs'>
+
+					{/* Główne statystyki - 3 kolumny */}
+					<div className='grid grid-cols-3 gap-3 text-xs mb-3'>
 						<div className='bg-cyan-50 rounded-lg p-2 text-center'>
 							<div className='text-cyan-600 font-bold text-lg'>{visitedCount}</div>
 							<div className='text-gray-600'>Countries</div>
@@ -659,6 +809,14 @@ function App() {
 							<div className='text-blue-600 font-bold text-lg'>{continentsVisited}/7</div>
 							<div className='text-gray-600'>Continents</div>
 						</div>
+						<div className='bg-purple-50 rounded-lg p-2 text-center'>
+							<div className='text-purple-600 font-bold text-lg'>{totalCities}</div>
+							<div className='text-gray-600'>Cities</div>
+						</div>
+					</div>
+
+					{/* Dodatkowe statystyki - 2 kolumny */}
+					<div className='grid grid-cols-2 gap-3 text-xs mb-3'>
 						<div className='bg-orange-50 rounded-lg p-2 text-center'>
 							<div className='text-orange-600 font-bold text-lg'>{wishlist.length}</div>
 							<div className='text-gray-600'>Wishlist</div>
@@ -667,10 +825,58 @@ function App() {
 							<div className='text-green-600 font-bold text-lg'>{worldPercentage}%</div>
 							<div className='text-gray-600'>World</div>
 						</div>
-						<div className='bg-purple-50 rounded-lg p-2 text-center'>
-							<div className='text-purple-600 font-bold text-lg'>{totalCities}</div>
-							<div className='text-gray-600'>Cities</div>
+					</div>
+
+					{/* 🆕 NOWE Insights - pełna szerokość */}
+					<div className='space-y-2 pt-3 border-t border-gray-200'>
+						{/* Favorite Continent */}
+						<div className='bg-blue-50 rounded-lg p-2 flex items-center justify-between'>
+							<div className='flex items-center gap-2'>
+								<span className='text-base'>🌍</span>
+								<div>
+									<div className='text-xs text-gray-600'>Favorite</div>
+									<div className='font-semibold text-gray-800 text-xs'>{mostVisitedContinent.name || 'N/A'}</div>
+								</div>
+							</div>
+							{mostVisitedContinent.count && (
+								<div className='text-blue-600 font-bold text-sm'>{mostVisitedContinent.count}</div>
+							)}
 						</div>
+
+						{/* New This Year */}
+						{countriesThisYear > 0 && (
+							<div className='bg-green-50 rounded-lg p-2 flex items-center justify-between'>
+								<div className='flex items-center gap-2'>
+									<span className='text-base'>📅</span>
+									<div>
+										<div className='text-xs text-gray-600'>New in {new Date().getFullYear()}</div>
+										<div className='font-semibold text-gray-800 text-xs'>
+											{countriesThisYear} {countriesThisYear === 1 ? 'country' : 'countries'}
+										</div>
+									</div>
+								</div>
+								<div className='text-green-600 font-bold text-sm'>{countriesThisYear}</div>
+							</div>
+						)}
+
+						{/* Most Explored */}
+						{mostExploredCountry && (
+							<div className='bg-orange-50 rounded-lg p-2 flex items-center justify-between'>
+								<div className='flex items-center gap-2'>
+									<span className='text-base'>🏆</span>
+									<div>
+										<div className='text-xs text-gray-600'>Most Explored</div>
+										<div className='font-semibold text-gray-800 text-xs flex items-center gap-1'>
+											<span className='inline-block' style={{ width: '1em', height: '1em' }}>
+												{getCountryFlag(mostExploredCountry.name)}
+											</span>
+											<span>{mostExploredCountry.name}</span>
+										</div>
+									</div>
+								</div>
+								<div className='text-orange-600 font-bold text-sm'>{mostExploredCountry.cityCount}</div>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
